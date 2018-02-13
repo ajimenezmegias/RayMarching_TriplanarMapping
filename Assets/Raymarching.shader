@@ -35,18 +35,18 @@
 
 			float3 ObjectPos;
 			float3 VertexPos;
-
+			float3 TimeSpeed;
 			float4 materials[10];
 
 			struct appdata
 			{
 				float4 vertex : POSITION;
 				float2 uv : TEXCOORD0;
-			};			
+			};
 
 			struct v2f {
-				float4 pos : SV_POSITION;	
-				float3 wPos : TEXCOORD1;	
+				float4 pos : SV_POSITION;
+				float3 wPos : TEXCOORD1;
 				float4 objPos : TEXCOORD2;
 				float3 vPos : TEXCOORD3;
 			};
@@ -55,11 +55,11 @@
 			{
 				RaymarchingOut rmOut;
 
-				float separation = (_Separation*sin(_Time.z + 4.15674));
+				float separation = (_Separation*sin(TimeSpeed.z + 4.15674));
 
 				float speed = 0.3;
-				float3 boxPos = T_R(position, float3(sin(_Time.z)*0.25,0, sin(_Time.z*1.12 + 0.2875)*0.25), float3(speed*sin(_Time.y+0.1) * 360, speed*sin(_Time.y+0.37)*360, speed*sin(_Time.y+0.48) * 360));
-				RaymarchingOut _box = sdBox( boxPos, float3(0.3, 0.3, 0.3));
+				float3 boxPos = T_R(position, float3(sin(TimeSpeed.z)*0.25,0, sin(TimeSpeed.z*1.12 + 0.2875)*0.25), float3(speed*sin(TimeSpeed.y + 0.1) * 360, speed*sin(TimeSpeed.y + 0.37) * 360, speed*sin(TimeSpeed.y + 0.48) * 360));
+				RaymarchingOut _box = sdBox(boxPos, float3(0.3, 0.3, 0.3));
 				_box.Color = materials[4];
 
 				RaymarchingOut sphere1 = sphereDistance(position + (separation*float3(1, 0, 0)), 0.1);
@@ -95,7 +95,7 @@
 						Scene(p - float3(0, 0, eps)).Distance - Scene(p + float3(0, 0, eps)).Distance
 						)
 				);
-			}	
+			}
 
 			fixed4 renderSurface(RaymarchingOut rmOut, float3 _viewDirection)
 			{
@@ -144,8 +144,10 @@
 				return o;
 			}
 
-			fixed4 frag (v2f i) : SV_Target
+			fixed4 frag(v2f i) : SV_Target
 			{
+				TimeSpeed = _Time;
+
 				InitializeMaterials();
 				ObjectPos = i.objPos;
 				VertexPos = i.wPos;
