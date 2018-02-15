@@ -10,9 +10,12 @@ Shader "Custom/TriplanarMapping"
 		_SideBump("Side Bump", 2D) = "bump"{}
 		_SideMetallic("Side Metallic", 2D) = "black"{}
 
+		_TopHeightExtrusion("TopHeight Extrusion", Range(0, 0.02)) = 0.02
+
 		_TopTex("Top Texture", 2D) = "white" {}
 		_TopBump("Top Bump", 2D) = "bump"{}
 		_TopMetallic("Top Metallic", 2D) = "black"{}
+
 	}
 		SubShader
 	{
@@ -20,8 +23,10 @@ Shader "Custom/TriplanarMapping"
 		LOD 200
 
 		CGPROGRAM
-		#pragma surface surf Standard	
+		#pragma surface surf Standard	 vertex:vert
 		#pragma target 3.0
+
+		#define SHAPRNESS 10
 
 		sampler2D _SideTex;
 		float4 _SideTex_ST;
@@ -33,6 +38,7 @@ Shader "Custom/TriplanarMapping"
 		sampler2D _TopBump;
 		sampler2D _TopMetallic;
 
+		float _TopHeightExtrusion;
 
 		struct Input
 		{
@@ -41,13 +47,26 @@ Shader "Custom/TriplanarMapping"
 			INTERNAL_DATA
 		};
 
+		void vert(inout appdata_full v, out Input o) {
+			UNITY_INITIALIZE_OUTPUT(Input, o);
+
+			float3  worldNormal = UnityObjectToWorldNormal(v.normal);
+
+			half3 triblend = pow(worldNormal, SHAPRNESS);
+			triblend /= (triblend.x + triblend.y + triblend.z);
+
+			triblend.y = worldNormal.y > 0 ? triblend.y : 0; //To avoid extruding bottom side
+			v.vertex.xyz += v.normal*_TopHeightExtrusion*triblend.y;
+			//TODO Fix texture stretching when extruding
+		}
+
 		void surf(Input IN, inout SurfaceOutputStandard o)
 		{
+			// work around bug where IN.worldNormal is always (0,0,0)!			
 			// https://github.com/bgolus/Normal-Mapping-for-a-Triplanar-Shader/blob/master/TriplanarSurfaceShader.shader#L118
-			// work around bug where IN.worldNormal is always (0,0,0)!
 			IN.worldNormal = WorldNormalVector(IN, float3(0, 0, 1));
 
-			half3 triblend = pow(IN.worldNormal, 4);
+			half3 triblend = pow(IN.worldNormal, SHAPRNESS);
 			triblend /= (triblend.x + triblend.y + triblend.z);
 
 			float2 uvX = IN.worldPos.zy * _SideTex_ST.xy + _SideTex_ST.zy;
