@@ -15,7 +15,6 @@ Shader "Custom/TriplanarMapping"
 		_TopTex("Top Texture", 2D) = "white" {}
 		_TopBump("Top Bump", 2D) = "bump"{}
 		_TopMetallic("Top Metallic", 2D) = "black"{}
-
 	}
 		SubShader
 	{
@@ -60,6 +59,13 @@ Shader "Custom/TriplanarMapping"
 			//TODO Fix texture stretching when extruding
 		}
 
+		float3 RNMBlend(float3 _normal1, float3 _normal2)
+		{
+			_normal1 += float3(0, 0, 1);
+			_normal2 *= float3(-1, -1, 1);
+			return _normal1*dot(_normal1, _normal2) / _normal1.z - _normal2;
+		}
+
 		void surf(Input IN, inout SurfaceOutputStandard o)
 		{
 			// work around bug where IN.worldNormal is always (0,0,0)!			
@@ -80,9 +86,12 @@ Shader "Custom/TriplanarMapping"
 			o.Albedo = tX * triblend.x + tY * triblend.y + tZ * triblend.z;
 
 			//Normal
-			half3 normalX = UnpackNormal(tex2D(_SideBump, uvX));
-			half3 normalY = UnpackNormal(IN.worldNormal.y > 0 ? tex2D(_TopBump, uvY) : tex2D(_SideBump, uvY));
-			half3 normalZ = UnpackNormal(tex2D(_SideBump, uvZ));
+			//RNM blend from @bgolus
+			half3 absVertNormal = abs(IN.worldNormal);
+			half3 normalX = RNMBlend(half3(IN.worldNormal.zy, absVertNormal.x), UnpackNormal(tex2D(_SideBump, uvX)));
+			half3 normalY = UnpackNormal(IN.worldNormal.y > 0 ? tex2D(_TopBump, uvY) : tex2D(_SideBump, uvY)); // we want the bottom of the object to be draw as a "side" instead of "top"
+			normalY = RNMBlend(half3(IN.worldNormal.xz, absVertNormal.y), normalY);
+			half3 normalZ = RNMBlend(half3(IN.worldNormal.xy, absVertNormal.z), UnpackNormal(tex2D(_SideBump, uvZ)));
 			o.Normal = normalX * triblend.x + normalY * triblend.y + normalZ * triblend.z;
 
 			//Metallic
