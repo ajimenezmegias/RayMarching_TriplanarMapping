@@ -32,12 +32,13 @@ Shader "Custom/TriplanarMapping"
 		sampler2D _SideBump;
 		sampler2D _SideMetallic;
 
+		float _TopHeightExtrusion;
+
 		sampler2D _TopTex;
 		float4 _TopTex_ST;
 		sampler2D _TopBump;
 		sampler2D _TopMetallic;
 
-		float _TopHeightExtrusion;
 
 		struct Input
 		{
@@ -46,7 +47,8 @@ Shader "Custom/TriplanarMapping"
 			INTERNAL_DATA
 		};
 
-		void vert(inout appdata_full v, out Input o) {
+		void vert(inout appdata_full v, out Input o)
+		{
 			UNITY_INITIALIZE_OUTPUT(Input, o);
 
 			float3  worldNormal = UnityObjectToWorldNormal(v.normal);

@@ -63,6 +63,6 @@ Material:
     - _Metallic: 0
     - _Sharpness: 20
     - _SharpnessBlend: 4
-    - _TopHeightExtrusion: 0.02
+    - _TopHeightExtrusion: 0
     m_Colors:
     - _Color: {r: 1, g: 0.08823532, b: 0.08823532, a: 1}

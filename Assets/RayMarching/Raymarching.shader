@@ -44,37 +44,38 @@
 				float2 uv : TEXCOORD0;
 			};
 
-			struct v2f {
+			struct v2f
+			{
 				float4 pos : SV_POSITION;
 				float3 wPos : TEXCOORD1;
 				float4 objPos : TEXCOORD2;
 				float3 vPos : TEXCOORD3;
 			};
 
-			RaymarchingOut Scene(float3 position)
+			RaymarchingOut Scene(float3 _position)
 			{
 				RaymarchingOut rmOut;
 
 				float separation = (_Separation*sin(TimeSpeed.z + 4.15674));
 
 				float speed = 0.3;
-				float3 boxPos = T_R(position, float3(sin(TimeSpeed.z)*0.25,0, sin(TimeSpeed.z*1.12 + 0.2875)*0.25), float3(speed*sin(TimeSpeed.y + 0.1) * 360, speed*sin(TimeSpeed.y + 0.37) * 360, speed*sin(TimeSpeed.y + 0.48) * 360));
-				RaymarchingOut _box = sdBox(boxPos, float3(0.3, 0.3, 0.3));
-				_box.Color = materials[4];
+				float3 boxPos = TranslateAndRotate(_position, float3(sin(TimeSpeed.z)*0.25,0, sin(TimeSpeed.z*1.12 + 0.2875)*0.25), float3(speed*sin(TimeSpeed.y + 0.1) * 360, speed*sin(TimeSpeed.y + 0.37) * 360, speed*sin(TimeSpeed.y + 0.48) * 360));
+				RaymarchingOut box = BoxDF(boxPos, float3(0.3, 0.3, 0.3));
+				box.Color = materials[4];
 
-				RaymarchingOut sphere1 = sphereDistance(position + (separation*float3(1, 0, 0)), 0.1);
+				RaymarchingOut sphere1 = SphereDF(_position + (separation*float3(1, 0, 0)), 0.1);
 				sphere1.Color = materials[0];
 
-				RaymarchingOut sphere2 = sphereDistance(position + (separation*float3(-1, 0, 0)), 0.1);
+				RaymarchingOut sphere2 = SphereDF(_position + (separation*float3(-1, 0, 0)), 0.1);
 				sphere2.Color = materials[1];
 
-				RaymarchingOut sphere3 = sphereDistance(position + (separation*float3(0, 0, 1)), 0.1);
+				RaymarchingOut sphere3 = SphereDF(_position + (separation*float3(0, 0, 1)), 0.1);
 				sphere3.Color = materials[2];
 
-				RaymarchingOut sphere4 = sphereDistance(position + (separation*float3(0, 0, -1)), 0.10);
+				RaymarchingOut sphere4 = SphereDF(_position + (separation*float3(0, 0, -1)), 0.10);
 				sphere4.Color = materials[3];
 
-				rmOut = _box;
+				rmOut = box;
 				rmOut = SoftUnion(sphere4, rmOut);
 				rmOut = SoftUnion(sphere3, rmOut);
 				rmOut = SoftUnion(sphere2, rmOut);
@@ -83,26 +84,26 @@
 				return rmOut;
 			}
 
-			float3 NormalByGradient(float3 p)
+			float3 NormalByGradient(float3 _point)
 			{
 				const float eps = 0.01;
 
-				return normalize
-				(float3
+				return normalize(
+					float3
 					(
-						Scene(p - float3(eps, 0, 0)).Distance - Scene(p + float3(eps, 0, 0)).Distance,
-						Scene(p - float3(0, eps, 0)).Distance - Scene(p + float3(0, eps, 0)).Distance,
-						Scene(p - float3(0, 0, eps)).Distance - Scene(p + float3(0, 0, eps)).Distance
-						)
+						Scene(_point - float3(eps, 0, 0)).Distance - Scene(_point + float3(eps, 0, 0)).Distance,
+						Scene(_point - float3(0, eps, 0)).Distance - Scene(_point + float3(0, eps, 0)).Distance,
+						Scene(_point - float3(0, 0, eps)).Distance - Scene(_point + float3(0, 0, eps)).Distance
+					)
 				);
 			}
 
-			fixed4 renderSurface(RaymarchingOut rmOut, float3 _viewDirection)
+			fixed4 RenderSurface(RaymarchingOut _rmOut, float3 _viewDirection)
 			{
-				return simpleLambert(rmOut.Normal, rmOut.Color, _viewDirection, _SpecularPower, _Gloss);
+				return simpleLambert(_rmOut.Normal, _rmOut.Color, _viewDirection, _SpecularPower, _Gloss);
 			}
 
-			RaymarchingOut raymarchHit(float3 direction)
+			RaymarchingOut RaymarchHit(float3 _direction)
 			{
 
 				float3 position = VertexPos;
@@ -117,7 +118,7 @@
 						rmOut.Normal = NormalByGradient(transformedPos);
 						return rmOut;
 					}
-					position += rmOut.Distance * direction;
+					position += rmOut.Distance * _direction;
 				}
 
 				RaymarchingOut empty;
@@ -125,7 +126,8 @@
 				return empty;
 			}
 
-			void InitializeMaterials() {
+			void InitializeMaterials()
+			{
 
 				materials[0] = float4(1, 0, 0, 1);
 				materials[1] = float4(1, 1, 0, 1);
@@ -153,16 +155,16 @@
 				VertexPos = i.wPos;
 				float3 viewDirection = normalize(i.wPos - _WorldSpaceCameraPos);
 
-				RaymarchingOut rmOut = raymarchHit(viewDirection);
+				RaymarchingOut rmOut = RaymarchHit(viewDirection);
 				if (rmOut.Color.a == 0) {
 					discard;
 				}
 
-				fixed4 col = renderSurface(rmOut,viewDirection);
+				fixed4 col = RenderSurface(rmOut,viewDirection);
 
 				return col;
-
 			}
+
 			ENDCG
 		}
 	}

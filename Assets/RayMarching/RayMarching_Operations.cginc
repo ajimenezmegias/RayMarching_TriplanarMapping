@@ -1,29 +1,30 @@
 ﻿#ifndef RAYMARCHING_OPERATIONS_INCLUDED
 #define RAYMARCHING_OPERATIONS_INCLUDED	
 
-float3 TranslatePoint(float3 p, float3 _t)
+float3 TranslatePoint(float3 _point, float3 _translation)
 {
-	return p - _t;
+	return _point - _translation;
 }
 
-float3 RotatePoint(float3 _point, float3 angles)
+//Angles in deg
+float3 RotatePoint(float3 _point, float3 _angles)
 {
-	float c = cos(radians(angles.x));
-	float s = sin(radians(angles.x));
+	float c = cos(radians(_angles.x));
+	float s = sin(radians(_angles.x));
 	float4x4 rotateXMatrix = float4x4(1, 0, 0, 0,
 		0, c, -s, 0,
 		0, s, c, 0,
 		0, 0, 0, 1);
 
-	c = cos(radians(angles.y));
-	s = sin(radians(angles.y));
+	c = cos(radians(_angles.y));
+	s = sin(radians(_angles.y));
 	float4x4 rotateYMatrix = float4x4(c, 0, s, 0,
 		0, 1, 0, 0,
 		-s, 0, c, 0,
 		0, 0, 0, 1);
 
-	c = cos(radians(angles.z));
-	s = sin(radians(angles.z));
+	c = cos(radians(_angles.z));
+	s = sin(radians(_angles.z));
 	float4x4 rotateZMatrix = float4x4(c, -s, 0, 0,
 		s, c, 0, 0,
 		0, 0, 1, 0,
@@ -33,9 +34,9 @@ float3 RotatePoint(float3 _point, float3 angles)
 }
 
 
-float3 T_R(float3 _point, float3 _trans, float3 _rot)
+float3 TranslateAndRotate(float3 _point, float3 _translation, float3 _rotation)
 {
-	return RotatePoint(TranslatePoint(_point, _trans), _rot);
+	return RotatePoint(TranslatePoint(_point, _translation), _rotation);
 }
 
 RaymarchingOut Union(RaymarchingOut _rmOut1, RaymarchingOut _rmOut2)
